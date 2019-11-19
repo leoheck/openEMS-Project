@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Compiling OpenEMS may require installing the following packages:
 # apt-get install cmake qt4-qmake libtinyxml-dev libcgal-dev libvtk5-qt4-dev
 # Compiling hyp2mat may require installing the following packages:
@@ -63,7 +62,7 @@ make clean &> /dev/null
 
 if [ -f bootstrap.sh ]; then
   echo "bootstrapping $1 ... please wait"
-  sh ./bootstrap.sh >> $LOG_FILE
+  unbuffer sh ./bootstrap.sh | tee -a $LOG_FILE
   if [ $? -ne 0 ]; then
     echo "bootstrap for $1 failed"
     cd ..
@@ -73,7 +72,7 @@ fi
 
 if [ -f configure ]; then
   echo "configuring $1 ... please wait"
-  ./configure $2 >> $LOG_FILE
+  unbuffer ./configure $2 | tee -a $LOG_FILE
   if [ $? -ne 0 ]; then
     echo "configure for $1 failed"
     cd ..
@@ -82,7 +81,7 @@ if [ -f configure ]; then
 fi
 
 echo "compiling $1 ... please wait"
-make -j4 >> $LOG_FILE
+unbuffer make -j4 | tee -a $LOG_FILE
 if [ $? -ne 0 ]; then
   echo "make for $1 failed"
   cd ..
@@ -94,7 +93,7 @@ cd ..
 function install {
 cd $1
 echo "installing $1 ... please wait"
-make ${@:2:$#} install >> $LOG_FILE
+unbuffer make ${@:2:$#} install | tee -a $LOG_FILE
 if [ $? -ne 0 ]; then
   echo "make install for $1 failed"
   cd ..
@@ -106,7 +105,7 @@ cd ..
 ##### build openEMS and dependencies ####
 tmpdir=`mktemp -d` && cd $tmpdir
 echo "running cmake in tmp dir: $tmpdir"
-cmake -DBUILD_APPCSXCAD=$BUILD_GUI -DCMAKE_INSTALL_PREFIX=$INSTALL_PATH -DWITH_MPI=$WITH_MPI $basedir >> $LOG_FILE
+unbuffer cmake -DBUILD_APPCSXCAD=$BUILD_GUI -DCMAKE_INSTALL_PREFIX=$INSTALL_PATH -DWITH_MPI=$WITH_MPI $basedir | tee -a $LOG_FILE
 if [ $? -ne 0 ]; then
   echo "cmake failed"
   cd $basedir
@@ -115,7 +114,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 echo "build openEMS and dependencies ... please wait"
-make >> $LOG_FILE 2>&1
+unbuffer make | tee -a $LOG_FILE 2>&1
 if [ $? -ne 0 ]; then
   echo "make failed, build incomplete, please see logfile for more details..."
   cd $basedir
